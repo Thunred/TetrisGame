@@ -13,7 +13,7 @@ namespace Tetris
         {
             posX = (Raylib.GetRenderWidth()/2) - 100;
             posY = (Raylib.GetRenderHeight() / 2) - 200;
-            Raylib.BeginDrawing();
+            //Raylib.BeginDrawing();
             Raylib.ClearBackground(Color.White);
 
             Raylib.DrawRectangle(posX, posY, 200, 400, Color.Blue);
@@ -30,7 +30,7 @@ namespace Tetris
                 j += 20;
             }
 
-            Raylib.EndDrawing();
+            //Raylib.EndDrawing();
         }
     }
 }
