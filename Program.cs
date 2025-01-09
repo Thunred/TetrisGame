@@ -1,175 +1,183 @@
 using Raylib_cs;
 using System;
+using System.Collections.Generic;
 
-class Tetris
+class Program
 {
     const int ScreenWidth = 800;
     const int ScreenHeight = 450;
-    const int GridHorizontalSize = 12;
-    const int GridVerticalSize = 20;
-    const int SquareSize = 20;
-
-    static GridSquare[,] grid = new GridSquare[GridHorizontalSize, GridVerticalSize];
-    static GridSquare[,] piece = new GridSquare[4, 4];
-    static bool gameOver = false;
-    static int piecePositionX = 0;
-    static int piecePositionY = 0;
-    static int gravityCounter = 0;
-    static int gravitySpeed = 30;
-
-    enum GridSquare { Empty, Moving, Full };
 
     static void Main()
     {
         Raylib.InitWindow(ScreenWidth, ScreenHeight, "Tetris with Raylib");
         Raylib.SetTargetFPS(60);
 
-        InitGame();
+        TetrisGame game = new TetrisGame(ScreenWidth, ScreenHeight);
 
         while (!Raylib.WindowShouldClose())
         {
-            if (!gameOver)
-            {
-                UpdateGame();
-                DrawGame();
-            }
-            else
-            {
-                DrawGameOver();
-            }
+            game.Update();
+            game.Draw();
         }
 
         Raylib.CloseWindow();
     }
+}
 
-    static void InitGame()
+abstract class Drawable
+{
+    public abstract void Draw();
+}
+
+class TetrisGame
+{
+    private Grid grid;
+    private Tetromino currentPiece;
+    private bool gameOver;
+    private int gravityCounter;
+    private int gravitySpeed;
+
+    public TetrisGame(int screenWidth, int screenHeight)
     {
-        for (int x = 0; x < GridHorizontalSize; x++)
+        grid = new Grid(12, 20, 20);
+        currentPiece = Tetromino.CreateRandom(grid.Width / 2 - 2, 0);
+        gameOver = false;
+        gravityCounter = 0;
+        gravitySpeed = 30;
+    }
+
+    public void Update()
+    {
+        if (!gameOver)
         {
-            for (int y = 0; y < GridVerticalSize; y++)
+            HandleInput();
+
+            gravityCounter++;
+            if (gravityCounter >= gravitySpeed)
             {
-                grid[x, y] = (x == 0 || x == GridHorizontalSize - 1 || y == GridVerticalSize - 1) ? GridSquare.Full : GridSquare.Empty;
-            }
-        }
-
-        piecePositionX = GridHorizontalSize / 2 - 2;
-        piecePositionY = 0;
-
-        GeneratePiece();
-    }
-
-    static void GeneratePiece()
-    {
-        Array.Clear(piece, 0, piece.Length);
-        piece[1, 0] = GridSquare.Moving;
-        piece[1, 1] = GridSquare.Moving;
-        piece[2, 1] = GridSquare.Moving;
-        piece[2, 0] = GridSquare.Moving; // Simple square piece
-    }
-
-    static void UpdateGame()
-    {
-        if (Raylib.IsKeyPressed(KeyboardKey.KEY_LEFT)) MovePiece(-1, 0);
-        if (Raylib.IsKeyPressed(KeyboardKey.KEY_RIGHT)) MovePiece(1, 0);
-
-        gravityCounter++;
-        if (gravityCounter >= gravitySpeed)
-        {
-            MovePiece(0, 1);
-            gravityCounter = 0;
-        }
-
-        if (CheckCollision())
-        {
-            FreezePiece();
-            CheckLines();
-            GeneratePiece();
-
-            if (CheckCollision()) gameOver = true; // New piece overlaps
-        }
-    }
-
-    static void MovePiece(int dx, int dy)
-    {
-        ClearPieceFromGrid();
-        piecePositionX += dx;
-        piecePositionY += dy;
-
-        if (CheckCollision())
-        {
-            piecePositionX -= dx;
-            piecePositionY -= dy;
-        }
-
-        PlacePieceOnGrid();
-    }
-
-    static void PlacePieceOnGrid()
-    {
-        for (int px = 0; px < 4; px++)
-        {
-            for (int py = 0; py < 4; py++)
-            {
-                if (piece[px, py] == GridSquare.Moving)
+                if (!grid.MovePiece(currentPiece, 0, 1))
                 {
-                    int gx = piecePositionX + px;
-                    int gy = piecePositionY + py;
-                    grid[gx, gy] = GridSquare.Moving;
-                }
-            }
-        }
-    }
+                    grid.FreezePiece(currentPiece);
+                    grid.CheckLines();
+                    currentPiece = Tetromino.CreateRandom(grid.Width / 2 - 2, 0);
 
-    static void ClearPieceFromGrid()
-    {
-        for (int x = 0; x < GridHorizontalSize; x++)
-        {
-            for (int y = 0; y < GridVerticalSize; y++)
-            {
-                if (grid[x, y] == GridSquare.Moving) grid[x, y] = GridSquare.Empty;
-            }
-        }
-    }
-
-    static bool CheckCollision()
-    {
-        for (int px = 0; px < 4; px++)
-        {
-            for (int py = 0; py < 4; py++)
-            {
-                if (piece[px, py] == GridSquare.Moving)
-                {
-                    int gx = piecePositionX + px;
-                    int gy = piecePositionY + py;
-
-                    if (gx < 0 || gx >= GridHorizontalSize || gy >= GridVerticalSize || grid[gx, gy] == GridSquare.Full)
+                    if (grid.CheckCollision(currentPiece))
                     {
-                        return true;
+                        gameOver = true;
                     }
                 }
+
+                gravityCounter = 0;
+            }
+        }
+        else if (Raylib.IsKeyPressed(KeyboardKey.KEY_R))
+        {
+            ResetGame();
+        }
+    }
+
+    public void Draw()
+    {
+        Raylib.BeginDrawing();
+        Raylib.ClearBackground(Color.RAYWHITE);
+
+        grid.Draw();
+
+        if (gameOver)
+        {
+            DrawGameOverMessage();
+        }
+
+        Raylib.EndDrawing();
+    }
+
+    private void HandleInput()
+    {
+        if (Raylib.IsKeyPressed(KeyboardKey.KEY_LEFT)) grid.MovePiece(currentPiece, -1, 0);
+        if (Raylib.IsKeyPressed(KeyboardKey.KEY_RIGHT)) grid.MovePiece(currentPiece, 1, 0);
+        if (Raylib.IsKeyPressed(KeyboardKey.KEY_DOWN)) grid.MovePiece(currentPiece, 0, 1);
+    }
+
+    private void DrawGameOverMessage()
+    {
+        string message = "Game Over! Press R to restart";
+        Raylib.DrawText(message, grid.Width * grid.SquareSize / 2 - Raylib.MeasureText(message, 20) / 2, grid.Height * grid.SquareSize / 2, 20, Color.RED);
+    }
+
+    private void ResetGame()
+    {
+        grid = new Grid(12, 20, 20);
+        currentPiece = Tetromino.CreateRandom(grid.Width / 2 - 2, 0);
+        gameOver = false;
+        gravityCounter = 0;
+    }
+}
+
+class Grid : Drawable
+{
+    public int Width { get; }
+    public int Height { get; }
+    public int SquareSize { get; }
+    private GridSquare[,] grid;
+
+    public Grid(int width, int height, int squareSize)
+    {
+        Width = width;
+        Height = height;
+        SquareSize = squareSize;
+        grid = new GridSquare[Width, Height];
+
+        for (int x = 0; x < Width; x++)
+        {
+            for (int y = 0; y < Height; y++)
+            {
+                grid[x, y] = (x == 0 || x == Width - 1 || y == Height - 1) ? GridSquare.Full : GridSquare.Empty;
+            }
+        }
+    }
+
+    public bool MovePiece(Tetromino piece, int dx, int dy)
+    {
+        piece.ClearFromGrid(grid);
+        piece.PositionX += dx;
+        piece.PositionY += dy;
+
+        if (CheckCollision(piece))
+        {
+            piece.PositionX -= dx;
+            piece.PositionY -= dy;
+            piece.PlaceOnGrid(grid);
+            return false;
+        }
+
+        piece.PlaceOnGrid(grid);
+        return true;
+    }
+
+    public void FreezePiece(Tetromino piece)
+    {
+        piece.FreezeOnGrid(grid);
+    }
+
+    public bool CheckCollision(Tetromino piece)
+    {
+        foreach (var (x, y) in piece.OccupiedCells())
+        {
+            if (x < 0 || x >= Width || y >= Height || grid[x, y] == GridSquare.Full)
+            {
+                return true;
             }
         }
         return false;
     }
 
-    static void FreezePiece()
+    public void CheckLines()
     {
-        for (int x = 0; x < GridHorizontalSize; x++)
-        {
-            for (int y = 0; y < GridVerticalSize; y++)
-            {
-                if (grid[x, y] == GridSquare.Moving) grid[x, y] = GridSquare.Full;
-            }
-        }
-    }
-
-    static void CheckLines()
-    {
-        for (int y = 0; y < GridVerticalSize - 1; y++)
+        for (int y = 0; y < Height - 1; y++)
         {
             bool lineFull = true;
 
-            for (int x = 1; x < GridHorizontalSize - 1; x++)
+            for (int x = 1; x < Width - 1; x++)
             {
                 if (grid[x, y] != GridSquare.Full) lineFull = false;
             }
@@ -178,7 +186,7 @@ class Tetris
             {
                 for (int dy = y; dy > 0; dy--)
                 {
-                    for (int x = 1; x < GridHorizontalSize - 1; x++)
+                    for (int x = 1; x < Width - 1; x++)
                     {
                         grid[x, dy] = grid[x, dy - 1];
                     }
@@ -187,14 +195,11 @@ class Tetris
         }
     }
 
-    static void DrawGame()
+    public override void Draw()
     {
-        Raylib.BeginDrawing();
-        Raylib.ClearBackground(Color.RAYWHITE);
-
-        for (int x = 0; x < GridHorizontalSize; x++)
+        for (int x = 0; x < Width; x++)
         {
-            for (int y = 0; y < GridVerticalSize; y++)
+            for (int y = 0; y < Height; y++)
             {
                 Color color = Color.LIGHTGRAY;
                 if (grid[x, y] == GridSquare.Full) color = Color.DARKGRAY;
@@ -203,24 +208,70 @@ class Tetris
                 Raylib.DrawRectangle(x * SquareSize, y * SquareSize, SquareSize - 1, SquareSize - 1, color);
             }
         }
+    }
+}
 
-        Raylib.EndDrawing();
+enum GridSquare { Empty, Moving, Full }
+
+class Tetromino
+{
+    public int PositionX { get; set; }
+    public int PositionY { get; set; }
+    private GridSquare[,] shape;
+
+    public Tetromino(int x, int y, GridSquare[,] shape)
+    {
+        PositionX = x;
+        PositionY = y;
+        this.shape = shape;
     }
 
-    static void DrawGameOver()
+    public static Tetromino CreateRandom(int x, int y)
     {
-        Raylib.BeginDrawing();
-        Raylib.ClearBackground(Color.RAYWHITE);
+        GridSquare[,] squareShape = new GridSquare[4, 4];
+        squareShape[1, 0] = GridSquare.Moving;
+        squareShape[1, 1] = GridSquare.Moving;
+        squareShape[2, 1] = GridSquare.Moving;
+        squareShape[2, 0] = GridSquare.Moving; // Simple square piece
 
-        string message = "Game Over! Press R to restart";
-        Raylib.DrawText(message, ScreenWidth / 2 - Raylib.MeasureText(message, 20) / 2, ScreenHeight / 2, 20, Color.RED);
+        return new Tetromino(x, y, squareShape);
+    }
 
-        if (Raylib.IsKeyPressed(KeyboardKey.KEY_R))
+    public void PlaceOnGrid(GridSquare[,] grid)
+    {
+        foreach (var (x, y) in OccupiedCells())
         {
-            gameOver = false;
-            InitGame();
+            grid[x, y] = GridSquare.Moving;
         }
+    }
 
-        Raylib.EndDrawing();
+    public void ClearFromGrid(GridSquare[,] grid)
+    {
+        foreach (var (x, y) in OccupiedCells())
+        {
+            grid[x, y] = GridSquare.Empty;
+        }
+    }
+
+    public void FreezeOnGrid(GridSquare[,] grid)
+    {
+        foreach (var (x, y) in OccupiedCells())
+        {
+            grid[x, y] = GridSquare.Full;
+        }
+    }
+
+    public IEnumerable<(int, int)> OccupiedCells()
+    {
+        for (int px = 0; px < 4; px++)
+        {
+            for (int py = 0; py < 4; py++)
+            {
+                if (shape[px, py] == GridSquare.Moving)
+                {
+                    yield return (PositionX + px, PositionY + py);
+                }
+            }
+        }
     }
 }
