@@ -6,10 +6,10 @@ class TetrisGame
     private Grid grid;
     private Tetromino currentPiece;
     private bool gameOver;
-    private int gravityCounter;
+    private int gravityCounter = 0;
     private int gravitySpeed;
 
-    private int gravityAdd = 0;
+    private int gravityAdd = 10;
 
     public TetrisGame(int screenWidth, int screenHeight)
     {
@@ -45,10 +45,16 @@ class TetrisGame
                 gravityCounter = gravityAdd;
                 Console.WriteLine(gravityCounter);
             }
-            if (grid.scoreGravityCheck == 2) {
-                grid.scoreGravityCheck = 0;
-                gravityAdd+= 15;
-                Console.WriteLine(grid.scoreGravityCheck);
+            if (grid.scoreGravityCheck >= 1) {
+                grid.scoreGravityCheck -= 1;
+                Console.WriteLine(grid.scoreGravityCheck+"score");
+                if (gravityAdd < 46) {
+                    gravityAdd+=6;
+                    Console.WriteLine(gravityAdd + "add");
+                }
+                else if (gravityAdd == 46) {
+                    gravityAdd += 2;
+                }
             }
         }
         else if (Raylib.IsKeyPressed(KeyboardKey.KEY_R))
