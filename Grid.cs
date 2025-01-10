@@ -27,6 +27,51 @@ class Grid : Drawable
         }
     }
 
+    public bool CanPlacePiece(Tetromino piece)
+    {
+    foreach (var (x, y) in piece.OccupiedCells())
+    {
+        if (x < 0 || x >= Width || y < 0 || y >= Height || grid[x, y] == GridSquare.Full)
+        {
+            return false;
+        }
+    }
+    return true;
+    }
+
+    public bool MovePiece(Tetromino piece, int dx, int dy, bool rotate = false)
+    {
+        piece.ClearFromGrid(grid);
+
+        if (rotate)
+        {
+            piece.Rotate(grid);
+            if (!CanPlacePiece(piece))
+            {
+                piece.Rotate(grid); // Effectue une rotation inverse pour revenir à la forme originale
+                piece.Rotate(grid);
+                piece.Rotate(grid);
+            }
+        }
+        else
+        {
+            piece.PositionX += dx;
+            piece.PositionY += dy;
+
+            if (CheckCollision(piece))
+            {
+                piece.PositionX -= dx;
+                piece.PositionY -= dy;
+                piece.PlaceOnGrid(grid);
+                return false;
+            }
+        }
+
+        piece.PlaceOnGrid(grid);
+        return true;
+    }
+
+
     public bool MovePiece(Tetromino piece, int dx, int dy)
     {
         piece.ClearFromGrid(grid);

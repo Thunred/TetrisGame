@@ -5,6 +5,7 @@ class TetrisGame
 {
     private Grid grid;
     private Tetromino currentPiece;
+
     private bool gameOver;
     private int gravityCounter = 0;
     private int gravitySpeed;
@@ -14,7 +15,7 @@ class TetrisGame
     public TetrisGame(int screenWidth, int screenHeight)
     {
         grid = new Grid(12, 20, 20);
-        currentPiece = Tetromino.CreateRandom(grid.Width / 2 - 2, 0);
+        currentPiece = Tetromino.RandomPiece(grid.Width);
         gameOver = false;
         gravityCounter = 0;
         gravitySpeed = 50;
@@ -34,8 +35,8 @@ class TetrisGame
                 {
                     grid.FreezePiece(currentPiece);
                     grid.CheckLines();
-                    currentPiece = Tetromino.CreateRandom(grid.Width / 2 - 2, 0);
-
+                    currentPiece = Tetromino.RandomPiece(grid.Width);
+                    
                     if (grid.CheckCollision(currentPiece))
                     {
                         gameOver = true;
@@ -83,6 +84,7 @@ class TetrisGame
         if (Raylib.IsKeyPressed(KeyboardKey.KEY_LEFT)) grid.MovePiece(currentPiece, -1, 0);
         if (Raylib.IsKeyPressed(KeyboardKey.KEY_RIGHT)) grid.MovePiece(currentPiece, 1, 0);
         if (Raylib.IsKeyPressed(KeyboardKey.KEY_DOWN)) grid.MovePiece(currentPiece, 0, 1);
+        if (Raylib.IsKeyPressed(KeyboardKey.KEY_UP)) grid.MovePiece(currentPiece, 0, 0, true);
     }
 
     private void DrawGameOverMessage()
@@ -94,7 +96,8 @@ class TetrisGame
     private void ResetGame()
     {
         grid = new Grid(12, 20, 20);
-        currentPiece = Tetromino.CreateRandom(grid.Width / 2 - 2, 0);
+        gravityAdd = 10;
+        currentPiece = Tetromino.Square(grid.Width / 2 - 2, 0);
         gameOver = false;
         gravityCounter = 0;
     }
