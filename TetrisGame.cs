@@ -31,6 +31,7 @@ class TetrisGame
             gravityCounter++;
             if (gravityCounter >= gravitySpeed)
             {
+                grid.SetActivePiece(currentPiece);
                 if (!grid.MovePiece(currentPiece, 0, 1))
                 {
                     grid.FreezePiece(currentPiece);
@@ -50,7 +51,7 @@ class TetrisGame
                 grid.scoreGravityCheck -= 1;
                 Console.WriteLine(grid.scoreGravityCheck+"score");
                 if (gravityAdd < 46) {
-                    gravityAdd+=6;
+                    gravityAdd+=2;
                     Console.WriteLine(gravityAdd + "add");
                 }
                 else if (gravityAdd == 46) {

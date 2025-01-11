@@ -11,6 +11,13 @@ class Grid : Drawable
     public int SquareSize { get; }
     private GridSquare[,] grid;
 
+    private Tetromino activePiece;
+
+    public void SetActivePiece(Tetromino piece)
+    {
+        activePiece = piece;
+    }
+
     public Grid(int width, int height, int squareSize)
     {
         Width = width;
@@ -48,7 +55,7 @@ class Grid : Drawable
             piece.Rotate(grid);
             if (!CanPlacePiece(piece))
             {
-                piece.Rotate(grid); // Effectue une rotation inverse pour revenir à la forme originale
+                piece.Rotate(grid);
                 piece.Rotate(grid);
                 piece.Rotate(grid);
             }
@@ -140,11 +147,27 @@ class Grid : Drawable
             for (int y = 0; y < Height; y++)
             {
                 Color color = Color.LIGHTGRAY;
-                if (grid[x, y] == GridSquare.Full) color = Color.DARKGRAY;
-                else if (grid[x, y] == GridSquare.Moving) color = Color.GRAY;
+
+                if (grid[x, y] == GridSquare.Full)
+                {
+                    color = Color.DARKGRAY;
+                }
+                else if (grid[x, y] == GridSquare.Moving && activePiece != null)
+                {
+                    // Vérifie si la pièce active occupe cette case
+                    foreach (var (pieceX, pieceY) in activePiece.OccupiedCells())
+                    {
+                        if (pieceX == x && pieceY == y)
+                        {
+                            color = activePiece.Color;
+                            break;
+                        }
+                    }
+                }
 
                 Raylib.DrawRectangle(x * SquareSize, y * SquareSize, SquareSize - 1, SquareSize - 1, color);
             }
         }
     }
+
 }
