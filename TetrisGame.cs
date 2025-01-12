@@ -13,7 +13,6 @@ class TetrisGame
     private int gravitySpeed;
 
     private int gravityAdd = 10;
-    private bool canHold = true; // Pour s'assurer qu'on peut garder une pièce seulement une fois
 
     public TetrisGame(int screenWidth, int screenHeight)
     {
@@ -28,8 +27,6 @@ class TetrisGame
 
     public void Update()
     {
-        Raylib.DrawText($"Score {grid.score}", 300, 150, 20, Color.VIOLET);
-
         if (!gameOver)
         {
             HandleInput();
@@ -74,7 +71,7 @@ class TetrisGame
     public void Draw()
     {
         Raylib.BeginDrawing();
-        Raylib.ClearBackground(Color.RAYWHITE);
+        Raylib.ClearBackground(new Color(20, 20, 30, 255)); // Fond sombre pour une meilleure immersion
 
         // Dessiner la grille et la pièce active
         grid.Draw();
@@ -84,6 +81,9 @@ class TetrisGame
 
         // Dessiner la pièce gardée à gauche de l'écran
         DrawHeldPiece();
+
+        // Dessiner le score dans une section dédiée
+        DrawScore(grid.Width * grid.SquareSize, 20);
 
         if (gameOver)
         {
@@ -101,7 +101,7 @@ class TetrisGame
         if (Raylib.IsKeyPressed(KeyboardKey.KEY_UP)) grid.MovePiece(currentPiece, 0, 0, true);
 
         // Permettre de garder une pièce en appuyant sur la touche 'C' (pour "Hold")
-        if (Raylib.IsKeyPressed(KeyboardKey.KEY_C) && canHold)
+        if (Raylib.IsKeyPressed(KeyboardKey.KEY_C))
         {
             HoldPiece();
         }
@@ -118,19 +118,21 @@ class TetrisGame
         else
         {
             // Échanger la pièce courante avec la pièce gardée
-            currentPiece = heldPiece;
-            heldPiece = null;
+            Tetromino temp = heldPiece;
+            heldPiece = currentPiece;
+            currentPiece = temp;
         }
 
         // Réinitialiser la position de la pièce gardée en haut de la grille
         currentPiece.PositionY = 0;
         currentPiece.PositionX = grid.Width / 2 - 2; // Centrer la pièce gardée
+
     }
 
     private void DrawGameOverMessage()
     {
         string message = "Game Over! Press R to restart";
-        Raylib.DrawText(message, grid.Width * grid.SquareSize / 2 - Raylib.MeasureText(message, 20) / 2, grid.Height * grid.SquareSize / 2, 20, Color.RED);
+        Raylib.DrawText(message, 150, 300, 30, Color.RED);
     }
 
     private void ResetGame()
@@ -142,7 +144,6 @@ class TetrisGame
         heldPiece = null; // Réinitialiser la pièce gardée
         gameOver = false;
         gravityCounter = 0;
-        canHold = true; // Permettre de garder une nouvelle pièce
     }
 
     // Méthode pour dessiner la prochaine pièce à droite de l'écran
@@ -152,29 +153,44 @@ class TetrisGame
         int nextPieceX = 300;
         int nextPieceY = 50;
 
-        Raylib.DrawText(nextPieceText, nextPieceX-20, nextPieceY, 20, Color.DARKGRAY);
+        Raylib.DrawText(nextPieceText, nextPieceX - 20, nextPieceY, 20, Color.YELLOW);
 
         foreach (var (x, y, color) in nextPiece.ColoredCells())
         {
-            Raylib.DrawRectangle(nextPieceX + (x * grid.SquareSize), nextPieceY + (y * grid.SquareSize), grid.SquareSize, grid.SquareSize, color);
+            Raylib.DrawRectangle(nextPieceX + (x * grid.SquareSize), nextPieceY + (y * grid.SquareSize), grid.SquareSize - 2, grid.SquareSize - 2, color);
         }
     }
 
-    // Méthode pour dessiner la pièce gardée à gauche de l'écran
-    private void DrawHeldPiece()
+private void DrawHeldPiece()
+{
+    if (heldPiece != null)
     {
-        if (heldPiece != null)
+        string heldPieceText = "Held Piece:";
+        
+        int heldPieceX = 300;
+        int heldPieceY = 125;
+
+        Raylib.DrawText(heldPieceText, heldPieceX, heldPieceY, 20, Color.DARKGRAY);
+
+        heldPieceY += 30;
+
+        foreach (var (x, y, color) in heldPiece.ColoredCells())
         {
-            string heldPieceText = "Held Piece:";
-            int heldPieceX = 300; // Position à gauche de l'écran
-            int heldPieceY = 250;
-
-            Raylib.DrawText(heldPieceText, heldPieceX, heldPieceY, 20, Color.DARKGRAY);
-
-            foreach (var (x, y, color) in heldPiece.ColoredCells())
-            {
-                Raylib.DrawRectangle(heldPieceX + (x * grid.SquareSize), heldPieceY + (y * grid.SquareSize), grid.SquareSize, grid.SquareSize, color);
-            }
+            Raylib.DrawRectangle(
+                heldPieceX + (x * grid.SquareSize), 
+                heldPieceY + (y * grid.SquareSize), 
+                grid.SquareSize - 2, 
+                grid.SquareSize - 2, 
+                color
+            );
         }
+    }
+}
+
+
+    private void DrawScore(int offsetX, int offsetY)
+    {
+        string scoreText = $"Score: {grid.score}";
+        Raylib.DrawText(scoreText, offsetX + 20, offsetY, 20, Color.GREEN);
     }
 }

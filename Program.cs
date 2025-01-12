@@ -7,15 +7,28 @@ class Program
 
     static void Main()
     {
-        Raylib.InitWindow(ScreenWidth, ScreenHeight, "Tetris with Raylib");
+        Raylib.InitWindow(ScreenWidth, ScreenHeight, "Tetris Main Menu");
         Raylib.SetTargetFPS(60);
 
-        TetrisGame game = new TetrisGame(ScreenWidth, ScreenHeight);
+        MainMenu menu = new MainMenu(ScreenWidth, ScreenHeight);
+        TetrisGame game = null;
 
         while (!Raylib.WindowShouldClose())
         {
-            game.Update();
-            game.Draw();
+            if (game == null && menu.Update())
+            {
+                game = new TetrisGame(ScreenWidth, ScreenHeight);
+            }
+
+            if (game != null)
+            {
+                game.Update();
+                game.Draw();
+            }
+            else
+            {
+                menu.Draw();
+            }
         }
 
         Raylib.CloseWindow();
