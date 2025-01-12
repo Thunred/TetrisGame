@@ -55,10 +55,10 @@ class TetrisGame
             }
 
             // Accélérer la gravité au fur et à mesure du jeu
-            if (grid.scoreGravityCheck >= 1) {
-                grid.scoreGravityCheck -= 1;
+            if (grid.scoreGravityCheck >= 10) {
+                grid.scoreGravityCheck -= 10;
                 if (gravityAdd < 46) {
-                    gravityAdd += 2;
+                    gravityAdd += 4;
                 }
                 else if (gravityAdd == 46) {
                     gravityAdd += 2;
